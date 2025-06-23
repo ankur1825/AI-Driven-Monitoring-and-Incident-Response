@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rca-backend
+  namespace: observability-horizon-relevance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rca-backend
+  template:
+    metadata:
+      labels:
+        app: rca-backend
+    spec:
+      containers:
+        - name: rca-backend
+          image: ankur1825/horizon-ai-driven-monitoring-rca-backend:1.0.1
+          ports:
+            - containerPort: 8000
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-key
+                  key: api-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rca-backend
+  namespace: observability-horizon-relevance
+spec:
+  selector:
+    app: rca-backend
+  ports:
+    - port: 80
+      targetPort: 8000
+

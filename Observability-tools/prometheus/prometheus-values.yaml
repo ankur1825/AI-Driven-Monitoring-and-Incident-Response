@@ -1,0 +1,39 @@
+alertmanager:
+  enabled: true
+
+  persistence:
+    enabled: true
+    storageClass: gp2
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - prometheus.horizonrelevance.com
+    # tls:
+    #   - hosts:
+    #       - prometheus.horizonrelevance.com
+    #     secretName: prometheus-tls
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-dns
+  
+  nodeSelector:
+    topology.kubernetes.io/zone: us-east-1b    
+
+  persistentVolume:
+    enabled: true
+    storageClass: gp2
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+
+serverFiles:
+  prometheus.yml:
+    scrape_configs:
+      - job_name: kubernetes-nodes
+        static_configs:
+          - targets: ['localhost:9100']

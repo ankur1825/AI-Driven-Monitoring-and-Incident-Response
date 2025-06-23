@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-ingest
+  namespace: observability-horizon-relevance
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-ingest
+  template:
+    metadata:
+      labels:
+        app: ml-ingest
+    spec:
+      containers:
+        - name: ml-ingest
+          image: ankur1825/horizon-ai-driven-monitoring-ml-ingest:1.0.1
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-ingest
+  namespace: observability-horizon-relevance
+spec:
+  selector:
+    app: ml-ingest
+  ports:
+    - port: 80
+      targetPort: 8000
+

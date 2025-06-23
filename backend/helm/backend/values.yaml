@@ -1,0 +1,33 @@
+namespaceOverride: observability-horizon-relevance
+replicaCount: 2
+
+image:
+  repository: ankur1825/horizon-ai-driven-monitoring-backend
+  pullPolicy: IfNotPresent
+  tag: "1.1.4"
+
+service:
+  type: ClusterIP
+  port: 8000
+
+serviceAccount:
+  create: false
+  name: ""
+
+# jira:
+#   url: "https://your-domain.atlassian.net"
+#   user: "your-jira-user"
+#   token: "your-jira-token"
+#   projectKey: "INC"
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  hosts:
+    - host: horizonrelevance.com
+      paths:
+        - path: /backend(/|$)(.*)
+          pathType: ImplementationSpecific

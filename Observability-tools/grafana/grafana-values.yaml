@@ -1,0 +1,38 @@
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  hosts:
+    - grafana.horizonrelevance.com
+  tls:
+    - hosts:
+        - grafana.horizonrelevance.com
+      secretName: grafana-tls
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns    
+
+grafana:
+  admin:
+    existingSecret: grafana-admin-secret
+    existingSecretPasswordKey: admin-password
+
+  auth:
+    ldap:
+      enabled: true
+      configFile: /etc/grafana/ldap/ldap.toml
+
+  # ldap:
+  #   enabled: true
+  #   existingSecret: grafana-ldap-secret
+  #   mountPath: /etc/grafana/ldap    
+
+  log:
+    level: debug
+    filters: ldap:debug  
+
+# extraEnv:
+#   - name: LDAP_BIND_PASSWORD
+#     valueFrom:
+#       secretKeyRef:
+#         name: grafana-ldap-credentials
+#         key: LDAP_BIND_PASSWORD
+        

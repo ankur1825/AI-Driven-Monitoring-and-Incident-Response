@@ -1,0 +1,148 @@
+deploymentMode: SimpleScalable
+enableSimpleScalableMode: true
+
+serviceAccount:
+  create: true
+  name: loki
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::426946630837:role/EKS-Loki-IRSA
+
+loki:
+  auth_enabled: false
+
+  commonConfig:
+    replication_factor: 1
+
+  storage:
+    bucketNames:
+      chunks: loki-bucket-horizon-relevance
+      ruler: loki-bucket-horizon-relevance
+      admin: loki-bucket-horizon-relevance
+    type: s3
+
+  storage_config:
+    aws:
+      bucketnames: loki-bucket-horizon-relevance
+      region: us-east-1
+      sse_encryption: false
+      insecure: false
+
+  schemaConfig:
+    configs:
+      - from: 2020-10-24
+        store: boltdb-shipper
+        object_store: s3
+        schema: v11
+        index:
+          prefix: index_
+          period: 24h
+
+  ruler:
+    storage:
+      type: s3
+      s3:
+        bucketnames: loki-bucket-horizon-relevance
+        region: us-east-1
+
+  ingester:
+    wal:
+      enabled: true
+
+  limits_config:
+    retention_period: 30d
+    max_streams_per_user: 100000
+    max_entries_limit_per_query: 10000
+    ingestion_rate_mb: 50
+    ingestion_burst_size_mb: 100
+
+  compactor:
+    working_directory: /var/loki/compactor
+    shared_store: s3
+    retention_enabled: true
+
+backend:
+  # nodeSelector:
+  #   topology.kubernetes.io/zone: us-east-1b
+  persistence:
+    enabled: true
+    storageClass: gp2-csi
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+
+write:
+  # nodeSelector:
+  #   topology.kubernetes.io/zone: us-east-1b
+  persistence:
+    enabled: true
+    storageClass: gp2-csi
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+
+read:
+  # nodeSelector:
+  #   topology.kubernetes.io/zone: us-east-1b
+  persistence:
+    enabled: true
+    storageClass: gp2-csi
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+
+resultsCache:
+  enabled: true
+  # nodeSelector:
+  #   topology.kubernetes.io/zone: us-east-1b
+  persistence:
+    enabled: true
+    storageClass: gp2-csi
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+
+chunksCache:
+  enabled: true
+  # nodeSelector:
+  #   topology.kubernetes.io/zone: us-east-1b
+  persistence:
+    enabled: false # it was true
+    storageClass: gp2-csi
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi   
+
+simpleScalable:
+  backend:
+    replicas: 1
+  read:
+    replicas: 1
+  write:
+    replicas: 1
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 2Gi
+  limits:
+    cpu: 2
+    memory: 4Gi
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+  hosts:
+    - loki.horizonrelevance.com
+  paths:
+    queryFrontend:
+      - /
+    distributor:
+      - /
+    ruler:
+      - /
+  #tls:
+  #  - secretName: loki-tls
+  #    hosts:
+  #      - loki.horizonrelevance.com

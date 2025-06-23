@@ -1,0 +1,37 @@
+namespaceOverride: observability-horizon-relevance
+replicaCount: 1
+
+image:
+  repository: ankur1825/horizon-ai-driven-monitoring-ui-dashboard
+  tag: "1.0.2"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: false
+  automount: true
+  annotations: {}
+  name: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  hosts:
+    - host: horizonrelevance.com
+      paths:
+        - path: /ai-driven-monitoring(/|$)(.*)
+          pathType: ImplementationSpecific
+
+persistence:
+  enabled: true
+  storageClass: gp2
+  accessMode: ReadWriteOnce
+  size: 10Gi  

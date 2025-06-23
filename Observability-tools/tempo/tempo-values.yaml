@@ -1,0 +1,124 @@
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-dns
+  hosts:
+    - host: tempo.horizonrelevance.com
+      paths:
+        - path: /
+          pathType: Prefix
+  # tls:
+  #   - hosts:
+  #       - tempo.horizonrelevance.com
+  #     secretName: tempo-tls
+
+serviceAccount:
+  create: true
+  name: tempo
+  automountServiceAccountToken: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::426946630837:role/EKS-Loki-IRSA  
+
+tempo:
+  # storage:
+  #   trace:
+  #     backend: s3
+  #     s3:
+  #       bucket: loki-bucket-horizon-relevance
+  #       endpoint: s3.amazonaws.com
+  #       region: us-east-1
+  #       insecure: false
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces  
+
+  search:
+    enabled: true       
+
+  ring:
+    kvstore:
+      store: inmemory    
+
+  ingester:
+    lifecycler:
+      ring:
+        replication_factor: 1
+        kvstore:
+          store: inmemory
+      num_tokens: 512
+      join_after: 0s
+      observe_period: 0s
+      heartbeat_timeout: 5m
+      min_ready_duration: 0s    
+
+  #   # Optional, but highly recommended for production
+  # compactor:
+  #   compaction:
+  #     block_retention: 48h
+
+  # distributor:
+  #   receivers:
+  #     jaeger:
+  #       protocols:
+  #         thrift_compact:
+  #         thrift_binary:
+  #         thrift_http:
+  #         grpc:
+  #     otlp:
+  #       protocols:
+  #         grpc:
+  #         http:
+
+  # ingester:
+  #   lifecycler:
+  #     ring:
+  #       kvstore:
+  #         store: inmemory
+  #       replication_factor: 1
+
+  # querier:
+  #   frontend_worker:
+  #     frontend_address: tempo-query-frontend:9095
+
+  # queryFrontend:
+  #   search:
+  #     query_timeout: 30s       
+
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 3200
+      host: 127.0.0.1
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  livenessProbe:
+    httpGet:
+      path: /ready
+      port: 3200
+      host: 127.0.0.1
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+extraEnv:
+  - name: AWS_STS_REGIONAL_ENDPOINTS
+    value: regional    
+  # - name: AWS_REGION
+  #   value: us-east-1
+  # - name: AWS_DEFAULT_REGION
+  #   value: us-east-1  
+
+persistence:
+  enabled: true
+  storageClassName: gp2  # <-- replace if you have a different StorageClass
+  accessModes:
+    - ReadWriteOnce
+  size: 10Gi    
+

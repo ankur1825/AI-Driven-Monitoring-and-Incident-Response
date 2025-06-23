@@ -1,0 +1,29 @@
+mode: deployment
+
+image:
+  repository: otel/opentelemetry-collector
+  tag: 0.95.0
+
+ingress:
+  enabled: false
+
+# Disable the default metrics pipeline Helm injects
+configMap:
+  create: false
+
+config:
+  receivers:
+    otlp:
+      protocols:
+        grpc: {}
+        http: {}
+
+  exporters:
+    otlp:
+      endpoint: tempo.observability-horizon-relevance.svc.cluster.local:4317
+
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp]
+        exporters: [otlp]
